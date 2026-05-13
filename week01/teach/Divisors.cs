@@ -19,6 +19,13 @@ public static class Divisors {
     private static List<int> FindDivisors(int number) {
         List<int> results = new();
         // TODO problem 1
+        //loop from 1 to number - 1 and check if the current number is a divisor of the input number using modulo.
+        //if number % i == 0, then i is a divisor
+        for (int i = 1; i < number; i++) {
+            if (number % i == 0) {
+                results.Add(i);
+            }
+        }
         return results;
     }
 }

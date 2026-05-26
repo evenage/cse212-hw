@@ -1,4 +1,10 @@
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Net.Http;
 using System.Text.Json;
+using System.Text.Json.Serialization;
+
 
 public static class SetsAndMaps
 {
@@ -21,8 +27,32 @@ public static class SetsAndMaps
     /// <param name="words">An array of 2-character words (lowercase, no duplicates)</param>
     public static string[] FindPairs(string[] words)
     {
-        // TODO Problem 1 - ADD YOUR CODE HERE
-        return [];
+        var seen = new HashSet<string>();
+        var pairs = new List<string>();
+
+        foreach (var word in words)
+        {
+            // Skip if not 2 chars or same letters like "aa"
+            if (word.Length!= 2 || word[0] == word[1])
+                continue;
+
+            // Get the reverse: "ab" -> "ba"
+            string rev = new string(new char[] { word[1], word[0] });
+
+            if (seen.Contains(rev))
+            {
+                // Found a symmetric pair. Sort to keep output consistent: "ab & ba"
+                string first = string.CompareOrdinal(word, rev) < 0? word : rev;
+                string second = string.CompareOrdinal(word, rev) < 0? rev : word;
+                pairs.Add($"{first} & {second}");
+            }
+            else
+            {
+                seen.Add(word);
+            }
+        }
+
+        return pairs.ToArray();
     }
 
     /// <summary>
@@ -43,6 +73,19 @@ public static class SetsAndMaps
         {
             var fields = line.Split(",");
             // TODO Problem 2 - ADD YOUR CODE HERE
+
+            if (fields.Length < 4)
+                continue;
+
+            string degree = fields[3].Trim();
+
+            if (string.IsNullOrEmpty(degree))
+                continue;
+
+            if (degrees.TryGetValue(degree, out int count))
+                degrees[degree] = count + 1;
+            else
+                degrees[degree] = 1;
         }
 
         return degrees;
@@ -67,7 +110,38 @@ public static class SetsAndMaps
     public static bool IsAnagram(string word1, string word2)
     {
         // TODO Problem 3 - ADD YOUR CODE HERE
-        return false;
+        // Normalize: remove spaces and make lowercase
+        string s1 = word1.Replace(" ", "").ToLower();
+        string s2 = word2.Replace(" ", "").ToLower();
+
+        // Quick check: different lengths can't be anagrams
+        if (s1.Length!= s2.Length)
+            return false;
+
+        var counts = new Dictionary<char, int>();
+
+        // Count chars in first word
+        foreach (char c in s1)
+        {
+            if (counts.ContainsKey(c))
+                counts[c]++;
+            else
+                counts[c] = 1;
+        }
+
+        // Subtract chars in second word
+        foreach (char c in s2)
+        {
+            if (!counts.ContainsKey(c))
+                return false; // char not in word1
+
+            counts[c]--;
+            if (counts[c] == 0)
+                counts.Remove(c);
+        }
+
+        // If dictionary is empty, all counts matched
+        return counts.Count == 0;
     }
 
     /// <summary>
@@ -84,6 +158,8 @@ public static class SetsAndMaps
     /// https://earthquake.usgs.gov/earthquakes/feed/v1.0/geojson.php
     /// 
     /// </summary>
+    
+
     public static string[] EarthquakeDailySummary()
     {
         const string uri = "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_day.geojson";
@@ -101,6 +177,42 @@ public static class SetsAndMaps
         // on those classes so that the call to Deserialize above works properly.
         // 2. Add code below to create a string out each place a earthquake has happened today and its magitude.
         // 3. Return an array of these string descriptions.
-        return [];
+
+     
+        var results = new List<string>();
+        foreach (var feature in featureCollection.Features)
+        {
+            if (feature.Properties != null)
+            {
+                string place = feature.Properties.Place;
+                double mag = feature.Properties.Mag;
+                results.Add($"{place} - Mag {mag:F2}");
+            }
+        }
+
+        return results.ToArray();
     }
+
+    // Nested classes - these stay in the same file
+    private class FeatureCollection
+    {
+        [JsonPropertyName("features")]
+        public List<Feature> Features { get; set; }
+    }
+
+    private class Feature
+    {
+        [JsonPropertyName("properties")]
+        public Properties Properties { get; set; }
+    }
+
+    private class Properties
+    {
+        [JsonPropertyName("mag")]
+        public double Mag { get; set; }
+
+        [JsonPropertyName("place")]
+        public string Place { get; set; }
+    }
+
 }

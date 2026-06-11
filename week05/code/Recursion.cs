@@ -15,7 +15,13 @@ public static class Recursion
     public static int SumSquaresRecursive(int n)
     {
         // TODO Start Problem 1
+       // Base case / terminating case
+    if (n <= 0)
         return 0;
+    
+    // Recursive case: current square + sum of smaller problem
+    return (n * n) + SumSquaresRecursive(n - 1);
+        
     }
 
     /// <summary>
@@ -40,6 +46,28 @@ public static class Recursion
     public static void PermutationsChoose(List<string> results, string letters, int size, string word = "")
     {
         // TODO Start Problem 2
+        // Base case: when word reaches desired length, add it to results
+    if (word.Length == size)
+    {
+        results.Add(word);
+        return;
+    }
+
+    // Recursive case: try each letter that's not already in word
+    for (int i = 0; i < letters.Length; i++)
+    {
+        char c = letters[i];
+
+        // Only use letter if we haven't used it yet
+        if (!word.Contains(c))
+        {
+            // Choose: add letter to current word
+            // Explore: recurse with smaller problem size+1
+            PermutationsChoose(results, letters, size, word + c);
+            // No explicit "unchoose" needed because strings are immutable
+        }
+
+    }
     }
 
     /// <summary>
@@ -97,10 +125,28 @@ public static class Recursion
             return 4;
 
         // TODO Start Problem 3
+        // Initialize memo dict on first call
+    remember??= new Dictionary<int, decimal>();
 
-        // Solve using recursion
-        decimal ways = CountWaysToClimb(s - 1) + CountWaysToClimb(s - 2) + CountWaysToClimb(s - 3);
-        return ways;
+    // Check memo cache first
+    if (remember.ContainsKey(s))
+        return remember[s];
+
+    // Base Cases
+    if (s == 0)
+        return 1; // 1 way: already at top, do nothing
+    if (s < 0)
+        return 0; // overshot, invalid
+
+    // Recursive case with memoization
+    decimal ways = CountWaysToClimb(s - 1, remember)
+                 + CountWaysToClimb(s - 2, remember)
+                 + CountWaysToClimb(s - 3, remember);
+
+    // Store result before returning
+    remember[s] = ways;
+    return ways;
+
     }
 
     /// <summary>
@@ -119,6 +165,25 @@ public static class Recursion
     public static void WildcardBinary(string pattern, List<string> results)
     {
         // TODO Start Problem 4
+        // Find the first wildcard position
+    int starIndex = pattern.IndexOf('*');
+    
+    // Base case: no * left, so pattern is a complete binary string
+    if (starIndex == -1)
+    {
+        results.Add(pattern);
+        return;
+    }
+
+    // Split pattern around the first *
+    string prefix = pattern[..starIndex];           // everything before *
+    string suffix = pattern[(starIndex + 1)..];     // everything after *
+
+    // Recursive case: replace * with '0' and recurse
+    WildcardBinary(prefix + '0' + suffix, results);
+    
+    // Recursive case: replace * with '1' and recurse  
+    WildcardBinary(prefix + '1' + suffix, results);
     }
 
     /// <summary>
@@ -137,6 +202,36 @@ public static class Recursion
 
         // TODO Start Problem 5
         // ADD CODE HERE
+        // Add current position to path
+    currPath.Add((x, y));
+
+    // Base case: reached the end square
+    if (maze.IsEnd(x, y))
+    {
+        results.Add(currPath.AsString());
+        currPath.RemoveAt(currPath.Count - 1); // backtrack before return
+        return;
+    }
+
+    // Try 4 directions: Right, Down, Left, Up
+    int[] dx = { 1, 0, -1, 0 };
+    int[] dy = { 0, 1, 0, -1 };
+
+    for (int i = 0; i < 4; i++)
+    {
+        int nx = x + dx[i];
+        int ny = y + dy[i];
+
+        // Check if move is valid using Maze helper
+        if (maze.IsValidMove(currPath, nx, ny))
+        {
+            // Recurse from new position
+            SolveMaze(results, maze, nx, ny, currPath);
+        }
+    }
+
+    // Backtrack: remove current position before returning to previous call
+    currPath.RemoveAt(currPath.Count - 1);
 
         // results.Add(currPath.AsString()); // Use this to add your path to the results array keeping track of complete maze solutions when you find the solution.
     }
